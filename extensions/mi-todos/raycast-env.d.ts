@@ -22,6 +22,8 @@ declare namespace Preferences {
   export type AppendTask = ExtensionPreferences & {}
   /** Preferences accessible in the `create-project` command */
   export type CreateProject = ExtensionPreferences & {}
+  /** Preferences accessible in the `browse-mitodos` command */
+  export type BrowseMitodos = ExtensionPreferences & {}
   /** Preferences accessible in the `search` command */
   export type Search = ExtensionPreferences & {}
 }
@@ -37,6 +39,8 @@ declare namespace Arguments {
   /** Project name */
   "name": string
 }
+  /** Arguments passed to the `browse-mitodos` command */
+  export type BrowseMitodos = {}
   /** Arguments passed to the `search` command */
   export type Search = {
   /** Search your tasks and knowledge base... */

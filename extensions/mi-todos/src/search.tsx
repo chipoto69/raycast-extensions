@@ -1,42 +1,14 @@
-import {
-  Action,
-  ActionPanel,
-  Detail,
-  getPreferenceValues,
-  Icon,
-  List,
-  useNavigation,
-} from "@raycast/api";
+import { Action, ActionPanel, getPreferenceValues, Icon, List, useNavigation } from "@raycast/api";
 import { usePromise } from "@raycast/utils";
 import { useState } from "react";
-import { expandHome, resolvePath, readFile } from "./util/storage";
+import { ContentDetail } from "./components/content-detail";
+import { expandHome, resolvePath } from "./util/storage";
 import { searchMitodos, searchWikiWithQmd } from "./util/qmd";
 
 interface SearchResult {
   path: string;
   snippet: string;
   score: number;
-}
-
-function ContentDetail({ filepath, fileName }: { filepath: string; fileName: string }) {
-  let content = "(file not readable)";
-  try {
-    content = readFile(filepath);
-  } catch {
-    // keep fallback
-  }
-
-  return (
-    <Detail
-      markdown={`# ${fileName}\n\n\`\`\`markdown\n${content.slice(0, 5000)}\n\`\`\``}
-      actions={
-        <ActionPanel>
-          <Action.CopyToClipboard title="Copy Path" content={filepath} />
-          <Action.CopyToClipboard title="Copy Content" content={content} />
-        </ActionPanel>
-      }
-    />
-  );
 }
 
 export default function Command(props: { arguments?: { query?: string } }) {

@@ -43,6 +43,12 @@
       ]
     },
     {
+      "name": "browse-mitodos",
+      "title": "Browse MiToDos",
+      "description": "Browse MiToDos files with task counts and previews",
+      "mode": "view"
+    },
+    {
       "name": "search",
       "title": "Search MiToDos",
       "description": "Search todos across wiki with QMD semantic search",
