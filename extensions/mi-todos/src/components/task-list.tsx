@@ -10,7 +10,13 @@ import {
 } from "@raycast/api";
 import { usePromise } from "@raycast/utils";
 import { ContentDetail } from "./content-detail";
-import { MiTodoTask, listTasksInFile, toggleTaskInFile } from "../util/tasks";
+import {
+  MiTodoTask,
+  listTaskSectionsInFile,
+  listTasksInFile,
+  moveTaskToSection,
+  toggleTaskInFile,
+} from "../util/tasks";
 
 type TaskListProps = {
   filepath: string;
@@ -20,11 +26,15 @@ type TaskListProps = {
 
 export function TaskList({ filepath, fileName, onTasksChanged }: TaskListProps) {
   const { push } = useNavigation();
-  const {
-    data: tasks = [],
-    isLoading,
-    revalidate,
-  } = usePromise(async (path: string) => listTasksInFile(path), [filepath]);
+  const { data, isLoading, revalidate } = usePromise(
+    async (path: string) => ({
+      tasks: listTasksInFile(path),
+      sections: listTaskSectionsInFile(path),
+    }),
+    [filepath],
+  );
+  const tasks = data?.tasks ?? [];
+  const sections = data?.sections ?? [];
 
   async function handleToggle(task: MiTodoTask) {
     try {
@@ -36,6 +46,21 @@ export function TaskList({ filepath, fileName, onTasksChanged }: TaskListProps) 
       await showToast({
         style: Toast.Style.Failure,
         title: "Failed to update task",
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  async function handleMove(task: MiTodoTask, sectionId: "inbox" | "priority" | "medium" | "low") {
+    try {
+      const section = moveTaskToSection(filepath, task.line, sectionId);
+      await revalidate();
+      await onTasksChanged?.();
+      await showHUD(`Moved to ${section}: ${task.text}`);
+    } catch (error) {
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Failed to move task",
         message: error instanceof Error ? error.message : String(error),
       });
     }
@@ -67,6 +92,19 @@ export function TaskList({ filepath, fileName, onTasksChanged }: TaskListProps) 
             accessories={task.section ? [{ text: task.section }] : []}
             actions={
               <ActionPanel>
+                {sections.filter((section) => section.title !== task.section).length > 0 && (
+                  <ActionPanel.Submenu title="Move to Section" icon={Icon.ArrowRight}>
+                    {sections
+                      .filter((section) => section.title !== task.section)
+                      .map((section) => (
+                        <Action
+                          key={section.id}
+                          title={section.label}
+                          onAction={() => handleMove(task, section.id)}
+                        />
+                      ))}
+                  </ActionPanel.Submenu>
+                )}
                 <Action
                   title={task.completed ? "Reopen Task" : "Complete Task"}
                   icon={task.completed ? Icon.RotateAntiClockwise : Icon.Check}
