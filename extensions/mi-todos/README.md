@@ -9,9 +9,9 @@ Capture tasks instantly from anywhere in Raycast, route them into projects, and 
 | Command | Description |
 |---|---|
 | **Add Task** | Quick-capture a task. Pick a project from the dropdown or drop it in the inbox. |
-| **Browse MiToDos** | See every MiToDos file, scan open vs. done counts, inspect file contents, toggle task state, and move tasks between MiToDos sections. |
+| **Browse MiToDos** | See every MiToDos file, scan open vs. done counts, inspect file contents, edit or delete tasks, toggle task state, and move tasks between MiToDos sections. |
 | **Create Project** | Scaffold a new `project-name.md` with inbox, priority lanes, and notes sections. |
-| **Search MiToDos** | Search across all MiToDos files with ripgrep (fast, respects `.gitignore`). Falls back to grep. QMD semantic search augments results when available, and MiToDos hits can be completed, reopened, or re-triaged from Raycast. |
+| **Search MiToDos** | Search across all MiToDos files with ripgrep (fast, respects `.gitignore`). Falls back to grep. QMD semantic search augments results when available, and MiToDos hits can be edited, deleted, completed, reopened, or re-triaged from Raycast. |
 
 ## File Layout
 

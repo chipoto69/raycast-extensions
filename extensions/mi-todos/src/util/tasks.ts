@@ -98,6 +98,32 @@ export function toggleTaskInFile(filepath: string, line: number): boolean {
   return nextCompleted;
 }
 
+export function updateTaskTextInFile(filepath: string, line: number, text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    throw new Error("Task cannot be empty");
+  }
+
+  const content = readFile(filepath);
+  const lines = content.split("\n");
+  const original = getTaskLine(lines, line);
+  const match = original.match(TASK_PATTERN);
+  if (!match) throw new Error(`Line ${line + 1} is not a task`);
+
+  lines[line] = original.replace(TASK_PATTERN, `- [${match[1]}] ${trimmed}`);
+  writeFile(filepath, lines.join("\n"));
+
+  return trimmed;
+}
+
+export function deleteTaskInFile(filepath: string, line: number): void {
+  const content = readFile(filepath);
+  const lines = content.split("\n");
+  getTaskLine(lines, line);
+  lines.splice(line, 1);
+  writeFile(filepath, lines.join("\n"));
+}
+
 export function moveTaskToSection(
   filepath: string,
   line: number,

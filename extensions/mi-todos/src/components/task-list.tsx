@@ -1,17 +1,21 @@
 import {
   Action,
   ActionPanel,
+  Alert,
   Icon,
   List,
   Toast,
+  confirmAlert,
   showHUD,
   showToast,
   useNavigation,
 } from "@raycast/api";
 import { usePromise } from "@raycast/utils";
 import { ContentDetail } from "./content-detail";
+import { EditTaskForm } from "./edit-task-form";
 import {
   MiTodoTask,
+  deleteTaskInFile,
   listTaskSectionsInFile,
   listTasksInFile,
   moveTaskToSection,
@@ -66,6 +70,36 @@ export function TaskList({ filepath, fileName, onTasksChanged }: TaskListProps) 
     }
   }
 
+  async function handleDelete(task: MiTodoTask) {
+    const confirmed = await confirmAlert({
+      title: "Delete task",
+      message: task.text,
+      primaryAction: {
+        title: "Delete Task",
+        style: Alert.ActionStyle.Destructive,
+      },
+      dismissAction: {
+        title: "Cancel",
+      },
+      icon: Icon.Trash,
+    });
+
+    if (!confirmed) return;
+
+    try {
+      deleteTaskInFile(filepath, task.line);
+      await revalidate();
+      await onTasksChanged?.();
+      await showHUD(`Deleted: ${task.text}`);
+    } catch (error) {
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Failed to delete task",
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
   return (
     <List isLoading={isLoading} searchBarPlaceholder={`Tasks in ${fileName}`}>
       {tasks.length === 0 ? (
@@ -106,6 +140,23 @@ export function TaskList({ filepath, fileName, onTasksChanged }: TaskListProps) 
                   </ActionPanel.Submenu>
                 )}
                 <Action
+                  title="Edit Task"
+                  icon={Icon.Pencil}
+                  onAction={() =>
+                    push(
+                      <EditTaskForm
+                        filepath={filepath}
+                        fileName={fileName}
+                        task={task}
+                        onTaskChanged={async () => {
+                          await revalidate();
+                          await onTasksChanged?.();
+                        }}
+                      />,
+                    )
+                  }
+                />
+                <Action
                   title={task.completed ? "Reopen Task" : "Complete Task"}
                   icon={task.completed ? Icon.RotateAntiClockwise : Icon.Check}
                   onAction={() => handleToggle(task)}
@@ -117,6 +168,13 @@ export function TaskList({ filepath, fileName, onTasksChanged }: TaskListProps) 
                 />
                 <Action.CopyToClipboard title="Copy Task" content={task.text} />
                 <Action.CopyToClipboard title="Copy Path" content={filepath} />
+                <Action
+                  title="Delete Task"
+                  icon={Icon.Trash}
+                  style={Action.Style.Destructive}
+                  shortcut={{ modifiers: ["cmd"], key: "backspace" }}
+                  onAction={() => handleDelete(task)}
+                />
               </ActionPanel>
             }
           />
