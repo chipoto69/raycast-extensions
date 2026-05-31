@@ -44,6 +44,10 @@ export function todayDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+export function slugifyProjectName(projectName: string): string {
+  return projectName.trim().toLowerCase().replace(/\s+/g, "-");
+}
+
 const INBOX_HEADING = "## 📋 Inbox";
 const TASKS_HEADING = "## 📁 Tasks";
 
@@ -102,7 +106,7 @@ export function createProjectFile(mitodosDir: string, projectName: string): stri
   const dir = resolvePath(mitodosDir);
   ensureDir(dir);
 
-  const filename = `${projectName.toLowerCase().replace(/\s+/g, "-")}.md`;
+  const filename = `${slugifyProjectName(projectName)}.md`;
   const filepath = path.join(dir, filename);
 
   if (fs.existsSync(filepath)) {
@@ -116,6 +120,53 @@ export function createProjectFile(mitodosDir: string, projectName: string): stri
   writeFile(filepath, content);
 
   return filepath;
+}
+
+export function renameProjectFile(
+  mitodosDir: string,
+  currentName: string,
+  nextName: string,
+): string {
+  const dir = resolvePath(mitodosDir);
+  const trimmed = nextName.trim();
+  if (!trimmed) {
+    throw new Error("Project name cannot be empty");
+  }
+
+  const currentPath = path.join(dir, `${currentName}.md`);
+  if (!fs.existsSync(currentPath)) {
+    throw new Error(`Project not found: ${currentName}`);
+  }
+
+  const nextSlug = slugifyProjectName(trimmed);
+  const nextPath = path.join(dir, `${nextSlug}.md`);
+  if (nextPath !== currentPath && fs.existsSync(nextPath)) {
+    throw new Error(`Already exists: ${nextSlug}.md`);
+  }
+
+  const content = readFile(currentPath);
+  const nextContent = content.replace(/^# MiToDos — .*/m, `# MiToDos — ${trimmed}`);
+  writeFile(currentPath, nextContent);
+
+  if (nextPath !== currentPath) {
+    fs.renameSync(currentPath, nextPath);
+  }
+
+  return nextSlug;
+}
+
+export function deleteProjectFile(mitodosDir: string, projectName: string): void {
+  if (projectName === "inbox") {
+    throw new Error("Inbox cannot be deleted");
+  }
+
+  const dir = resolvePath(mitodosDir);
+  const filepath = path.join(dir, `${projectName}.md`);
+  if (!fs.existsSync(filepath)) {
+    throw new Error(`Project not found: ${projectName}`);
+  }
+
+  fs.unlinkSync(filepath);
 }
 
 export function listProjectFiles(mitodosDir: string): string[] {
