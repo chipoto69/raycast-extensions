@@ -2,6 +2,7 @@ import { Action, ActionPanel, getPreferenceValues, Icon, List, useNavigation } f
 import { usePromise } from "@raycast/utils";
 import { useState } from "react";
 import { ContentDetail } from "./components/content-detail";
+import { TaskList } from "./components/task-list";
 import { expandHome, resolvePath } from "./util/storage";
 import { searchMitodos, searchWikiWithQmd } from "./util/qmd";
 
@@ -18,7 +19,7 @@ export default function Command(props: { arguments?: { query?: string } }) {
   const wikiPath = prefs.wikiPath ? resolvePath(expandHome(prefs.wikiPath)) : "";
   const { push } = useNavigation();
 
-  const { data, isLoading } = usePromise(
+  const { data, isLoading, revalidate } = usePromise(
     async (q: string) => {
       if (!q.trim()) return { todos: [] as SearchResult[], wiki: [] as SearchResult[] };
       return {
@@ -98,6 +99,21 @@ export default function Command(props: { arguments?: { query?: string } }) {
                 subtitle={r.snippet.slice(0, 120)}
                 actions={
                   <ActionPanel>
+                    <Action
+                      title="Manage Tasks"
+                      icon={Icon.Checklist}
+                      onAction={() =>
+                        push(
+                          <TaskList
+                            filepath={r.path}
+                            fileName={fileName}
+                            onTasksChanged={async () => {
+                              await revalidate();
+                            }}
+                          />,
+                        )
+                      }
+                    />
                     <Action
                       title="View Content"
                       icon={Icon.Eye}

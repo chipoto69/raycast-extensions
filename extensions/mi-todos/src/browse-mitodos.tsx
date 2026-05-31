@@ -11,6 +11,7 @@ import { usePromise } from "@raycast/utils";
 import * as fs from "fs";
 import * as path from "path";
 import { ContentDetail } from "./components/content-detail";
+import { TaskList } from "./components/task-list";
 import { expandHome, resolvePath } from "./util/storage";
 
 type FileSummary = {
@@ -61,7 +62,7 @@ export default function Command() {
   const mitodosDir = resolvePath(expandHome(prefs.mitodosDir));
   const { push } = useNavigation();
 
-  const { data, isLoading } = usePromise(
+  const { data, isLoading, revalidate } = usePromise(
     async (dir: string) => {
       if (!fs.existsSync(dir)) {
         return { exists: false, files: [] as FileSummary[] };
@@ -117,6 +118,21 @@ export default function Command() {
               accessories={accessories}
               actions={
                 <ActionPanel>
+                  <Action
+                    title="Manage Tasks"
+                    icon={Icon.Checklist}
+                    onAction={() =>
+                      push(
+                        <TaskList
+                          filepath={file.path}
+                          fileName={file.name}
+                          onTasksChanged={async () => {
+                            await revalidate();
+                          }}
+                        />,
+                      )
+                    }
+                  />
                   <Action
                     title="View Content"
                     icon={Icon.Eye}
