@@ -11,10 +11,12 @@ import {
   useNavigation,
 } from "@raycast/api";
 import { usePromise } from "@raycast/utils";
+import { useState } from "react";
 import { ContentDetail } from "./content-detail";
 import { EditTaskForm } from "./edit-task-form";
 import {
   MiTodoTask,
+  MiTodoSection,
   deleteTaskInFile,
   listTaskSectionsInFile,
   listTasksInFile,
@@ -28,8 +30,36 @@ type TaskListProps = {
   onTasksChanged?: () => void | Promise<void>;
 };
 
+type TaskFilter = "all" | "open" | "completed" | "inbox" | "priority" | "medium" | "low";
+
+function filterTasks(
+  tasks: MiTodoTask[],
+  filter: TaskFilter,
+  sections: MiTodoSection[],
+): MiTodoTask[] {
+  if (filter === "all") {
+    return tasks;
+  }
+
+  if (filter === "open") {
+    return tasks.filter((task) => !task.completed);
+  }
+
+  if (filter === "completed") {
+    return tasks.filter((task) => task.completed);
+  }
+
+  const section = sections.find((candidate) => candidate.id === filter);
+  if (!section) {
+    return tasks;
+  }
+
+  return tasks.filter((task) => task.section === section.title);
+}
+
 export function TaskList({ filepath, fileName, onTasksChanged }: TaskListProps) {
   const { push } = useNavigation();
+  const [filter, setFilter] = useState<TaskFilter>("all");
   const { data, isLoading, revalidate } = usePromise(
     async (path: string) => ({
       tasks: listTasksInFile(path),
@@ -39,6 +69,7 @@ export function TaskList({ filepath, fileName, onTasksChanged }: TaskListProps) 
   );
   const tasks = data?.tasks ?? [];
   const sections = data?.sections ?? [];
+  const filteredTasks = filterTasks(tasks, filter, sections);
 
   async function handleToggle(task: MiTodoTask) {
     try {
@@ -101,7 +132,30 @@ export function TaskList({ filepath, fileName, onTasksChanged }: TaskListProps) 
   }
 
   return (
-    <List isLoading={isLoading} searchBarPlaceholder={`Tasks in ${fileName}`}>
+    <List
+      isLoading={isLoading}
+      searchBarPlaceholder={`Tasks in ${fileName}`}
+      searchBarAccessory={
+        <List.Dropdown
+          tooltip="Filter"
+          value={filter}
+          onChange={(value) => setFilter(value as TaskFilter)}
+        >
+          <List.Dropdown.Section title="Status">
+            <List.Dropdown.Item title="All Tasks" value="all" />
+            <List.Dropdown.Item title="Open Tasks" value="open" />
+            <List.Dropdown.Item title="Completed Tasks" value="completed" />
+          </List.Dropdown.Section>
+          {sections.length > 0 && (
+            <List.Dropdown.Section title="Section">
+              {sections.map((section) => (
+                <List.Dropdown.Item key={section.id} title={section.label} value={section.id} />
+              ))}
+            </List.Dropdown.Section>
+          )}
+        </List.Dropdown>
+      }
+    >
       {tasks.length === 0 ? (
         <List.EmptyView
           icon={Icon.List}
@@ -117,8 +171,14 @@ export function TaskList({ filepath, fileName, onTasksChanged }: TaskListProps) 
             </ActionPanel>
           }
         />
+      ) : filteredTasks.length === 0 ? (
+        <List.EmptyView
+          icon={Icon.Filter}
+          title="No tasks match this filter"
+          description="Adjust the filter to see more tasks"
+        />
       ) : (
-        tasks.map((task) => (
+        filteredTasks.map((task) => (
           <List.Item
             key={`${filepath}:${task.line}`}
             icon={task.completed ? Icon.CheckCircle : Icon.Circle}

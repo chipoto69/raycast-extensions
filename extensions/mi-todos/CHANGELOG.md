@@ -8,6 +8,7 @@
 - **Task Triage**: Move tasks between inbox and project priority lanes without leaving Raycast.
 - **Task Editing**: Update or delete markdown tasks directly from the task manager UI.
 - **Project Actions**: Rename or delete project markdown files from the browse command.
+- **Task Filters**: Filter tasks by status or section inside the task manager UI.
 - **Create Project**: Scaffold new project files from Raycast.
 - **Search MiToDos**: ripgrep-powered search across all task files, with QMD wiki fallback.
 - **Markdown-native**: Tasks live in `~/MiToDos/` — plain `.md` files, version-controllable, AI-readable.
